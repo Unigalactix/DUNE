@@ -4,31 +4,32 @@
 <meta name="theme-color" content="#070706"><meta name="description" content="The whole Dune saga explained in plain English: story, films, series, timeline, characters, houses, spice, books and glossary.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/site.css?v=noir1"></head>
+<link rel="stylesheet" href="assets/site.css?v=noir2"></head>
 <body class="spoilers-off">
+<div id="scroll-progress" aria-hidden="true"></div>
 <header class="site"><div class="header-in">
 <a class="wordmark" href="#top">DUNE<span>.</span></a>
 <button id="menu-btn" class="menu-btn" aria-expanded="false" aria-label="Open menu">☰ Menu</button>
 <nav id="main-nav" class="main" aria-label="Main navigation">
-<a href="#story">Story</a><a href="#saga">Screen Saga</a><a href="#timeline">Timeline</a><a href="#characters">Characters</a><a href="#houses">Houses</a><a href="#arrakis">Arrakis</a><a href="#books">Books</a><a href="#glossary">Glossary</a>
+<a href="#story">Story</a><a href="#saga">Screen Saga</a><a href="#timeline">Timeline</a><a href="#characters">Characters</a><a href="#houses">Houses</a><a href="#arrakis">Arrakis</a><a href="#books">Books</a><a href="#glossary">Glossary</a><a href="#quiz">Quiz</a>
 </nav>
 <label class="spoiler-toggle"><input type="checkbox" id="spoiler-toggle"> Show spoilers</label>
 </div></header>
 
 <main id="top">
 <!-- HERO -->
-<div class="hero"><div class="wrap">
+<div class="hero"><canvas id="dust" aria-hidden="true"></canvas><div class="wrap">
 <p class="eyebrow">Arrakis • Spice • Destiny — Explained Simply</p>
 <h1>DUNE</h1>
 <p class="tagline">“Fear is the mind-killer.”</p>
 <p class="sub"><strong>The whole saga, explained so anyone can follow it.</strong> No prior knowledge needed. One desert planet produces the substance that makes space travel possible — so kings, killers, prophets and giant worms all fight to control it.</p>
-<div class="btns"><a class="btn" href="#explained">Start: Dune in 60 Seconds ↓</a><a class="btn ghost" href="#saga">Jump to Films &amp; Series</a></div>
+<div class="btns"><button class="btn" id="open-story" type="button">▶ Enter Story Mode</button><a class="btn ghost" href="#explained">Dune in 60 Seconds ↓</a><a class="btn ghost" href="#saga">Jump to Films &amp; Series</a></div>
 <div class="stats">
 <div class="stat"><b>6</b><span>Frank Herbert novels in the original saga</span></div>
 <div class="stat"><b>10,191 AG</b><span>Year the main story begins (After Guild)</span></div>
 <div class="stat"><b>1 Planet</b><span>Arrakis — the only source of spice in the universe</span></div>
 <div class="stat"><b>400m+</b><span>Length of the largest sandworms — longer than 4 football fields</span></div>
-</div></div></div>
+</div><span class="scroll-hint">Scroll — the saga unfolds ↓</span></div></div>
 
 <!-- 01 60 SECONDS -->
 <section id="explained"><div class="wrap">
@@ -211,6 +212,14 @@
 <article class="card gloss-item"><h3>Water of Life</h3><p>A deadly blue liquid from a drowned baby worm. Surviving it (as Reverend Mothers and Paul do) unlocks ancestral memory — most who try die.</p></article>
 </div></div></section>
 
+<!-- QUIZ -->
+<section id="quiz"><div class="wrap">
+<div class="sec-head"><div class="sec-num">✦</div><div><h2>Which House Claims You?</h2><p>Four questions. One allegiance. Answer honestly — the sorting is instant, and very Dune: there are no wrong houses, only consequences.</p></div></div>
+<div class="detail-panel" id="quiz-panel">
+<div id="quiz-stage"></div>
+</div>
+</div></section>
+
 <!-- 10 THEMES -->
 <section id="themes"><div class="wrap">
 <div class="sec-head"><div class="sec-num">10</div><div><h2>Themes &amp; Endings Explained</h2><p>What Dune is really about — underneath the worms and wars.</p></div></div>
@@ -234,5 +243,23 @@
 <p>Sources: Frank Herbert's novels (1965–1985), the films and series listed above, and Wikipedia / Wikimedia Commons for actor portraits. Actor portraits are via Wikipedia / Wikimedia Commons — not film stills — and remain under their original licences.</p>
 <p>Built as a static site: no tracking, no build step. Toggle spoilers in the header at any time.</p>
 </div></footer>
-<script src="assets/app.js"></script>
+<script src="assets/app.js?v=story2"></script>
+<!-- STORY MODE -->
+<div id="story-mode" role="dialog" aria-modal="true" aria-label="Dune Story Mode" hidden>
+<div class="sm-top"><span class="sm-brand">DUNE — STORY MODE</span><span id="sm-counter">Scene 1 / 10</span><button id="sm-close" class="sm-x" type="button" aria-label="Exit Story Mode">✕ Exit</button></div>
+<div class="sm-progress"><span id="sm-bar"></span></div>
+<div class="sm-stage" id="sm-stage">
+<p class="sm-kicker" id="sm-kicker"></p>
+<h2 class="sm-title" id="sm-title"></h2>
+<p class="sm-body" id="sm-body"></p>
+<p class="sm-fact" id="sm-fact"></p>
+</div>
+<div class="sm-controls">
+<button id="sm-prev" class="btn ghost" type="button">← Prev</button>
+<div class="sm-dots" id="sm-dots"></div>
+<button id="sm-auto" class="btn ghost" type="button">Auto ▶</button>
+<button id="sm-next" class="btn" type="button">Next →</button>
+</div>
+<p class="sm-hint">Use ← → arrow keys • Swipe on mobile • Esc to exit — Story Mode contains full spoilers</p>
+</div>
 </body></html>

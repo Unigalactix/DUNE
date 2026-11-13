@@ -95,3 +95,96 @@ const firstSaga=document.querySelector('[data-saga="partone2021"]'); if(firstSag
 const firstTl=document.querySelector('[data-timeline="t1"]'); if(firstTl) firstTl.click();
 const firstCycle=document.querySelector('[data-cycle="c1"]'); if(firstCycle) firstCycle.click();
 })();
+
+// ===== V2: transitions, Story Mode, quiz, dust, count-ups =====
+(function(){
+"use strict";
+const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Scroll progress + header shrink
+const prog=document.getElementById('scroll-progress'); const header=document.querySelector('header.site');
+function onScroll(){ const st=window.scrollY||0; const max=document.documentElement.scrollHeight-window.innerHeight; if(prog) prog.style.width=(max>0?(st/max*100):0)+'%'; if(header) header.classList.toggle('scrolled',st>40); }
+window.addEventListener('scroll',onScroll,{passive:true}); onScroll();
+// Reveal on scroll (staggered)
+const revealEls=document.querySelectorAll('.card,.char-card,.stat,.flow-step,.detail-panel,.litany,.sec-head,.gloss-item');
+revealEls.forEach((el,i)=>{ el.classList.add('reveal'); el.style.transitionDelay=((i%4)*70)+'ms'; });
+if('IntersectionObserver' in window && !reduced){ const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); },{threshold:.1}); revealEls.forEach(el=>io.observe(el)); } else { revealEls.forEach(el=>el.classList.add('in')); }
+// Active nav highlighting
+const navLinks=document.querySelectorAll('nav.main a[href^="#"]');
+if('IntersectionObserver' in window){ const secIO=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id)); } }); },{rootMargin:'-40% 0px -55% 0px'}); document.querySelectorAll('section[id]').forEach(s=>secIO.observe(s)); }
+// Animated detail panels: re-trigger on any tab/timeline/cycle click
+function reanimate(panel){ if(!panel) return; panel.classList.remove('panel-in'); void panel.offsetWidth; panel.classList.add('panel-in'); }
+document.querySelectorAll('[data-saga]').forEach(b=>b.addEventListener('click',()=>reanimate(document.getElementById('saga-detail'))));
+document.querySelectorAll('[data-timeline]').forEach(b=>b.addEventListener('click',()=>reanimate(document.getElementById('timeline-detail'))));
+document.querySelectorAll('[data-cycle]').forEach(b=>b.addEventListener('click',()=>reanimate(document.getElementById('cycle-detail'))));
+// Count-up stats
+function countUp(el){ const raw=el.textContent.trim(); const m=raw.match(/^([\d,]+)(.*)$/); if(!m) return; const target=parseInt(m[1].replace(/,/g,''),10); const suffix=m[2]||''; if(reduced||isNaN(target)) return; const t0=performance.now(),dur=1500; function tick(t){ const p=Math.min(1,(t-t0)/dur); const v=Math.round(target*(1-Math.pow(1-p,3))); el.textContent=v.toLocaleString('en-US')+suffix; if(p<1) requestAnimationFrame(tick); } requestAnimationFrame(tick); }
+const statNums=document.querySelectorAll('.stat b');
+if('IntersectionObserver' in window){ const sIO=new IntersectionObserver(es=>{ es.forEach(e=>{ if(e.isIntersecting){ countUp(e.target); sIO.unobserve(e.target); } }); },{threshold:.4}); statNums.forEach(el=>sIO.observe(el)); }
+// Hero dust canvas — slow matte spice motes
+const canvas=document.getElementById('dust');
+if(canvas && !reduced){ const ctx=canvas.getContext('2d'); const hero=canvas.parentElement; let W,H,parts=[],running=true;
+ function size(){ W=canvas.width=hero.clientWidth; H=canvas.height=hero.clientHeight; }
+ function make(){ parts=[]; const n=Math.min(90,Math.floor(W/14)); for(let i=0;i<n;i++) parts.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+.4,s:Math.random()*.25+.06,d:Math.random()*Math.PI*2,o:Math.random()*.5+.15}); }
+ function frame(){ if(running){ ctx.clearRect(0,0,W,H); parts.forEach(p=>{ p.y-=p.s; p.x+=Math.sin(p.d+=.002)*.15; if(p.y<-4){p.y=H+4;p.x=Math.random()*W;} ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fillStyle='rgba(166,141,91,'+p.o+')'; ctx.fill(); }); } requestAnimationFrame(frame); }
+ size(); make(); frame(); window.addEventListener('resize',()=>{size();make();});
+ if('IntersectionObserver' in window){ new IntersectionObserver(es=>{running=es[0].isIntersecting;}).observe(hero); }
+}
+// ===== STORY MODE =====
+const scenes=[
+{k:"Prologue — Why Everything Happens",t:"One Planet. One Substance.",b:"Far in the future, humanity spreads across thousands of worlds — but every ship needs spice melange to travel safely, and spice exists on exactly one planet: Arrakis. Control the desert, and you control the universe. Everything you are about to see — every betrayal, marriage and war — happens because of that single fact.",f:"The spice must flow"},
+{k:"Chapter I — Caladan, 10,191 AG",t:"The Test",b:"On the ocean world Caladan, 15-year-old Paul Atreides is woken before dawn and tested by an ancient Bene Gesserit Reverend Mother: a poison needle at his throat, his hand in a box of pure pain. Endure, and prove he is human — pull away, and die. Paul endures. Something about this boy is not ordinary.",f:"The gom jabbar • Paul Atreides, age 15"},
+{k:"Chapter II — The Gift That Is a Trap",t:"Arrakis Changes Hands",b:"The Emperor orders House Atreides to leave Caladan and take over Arrakis from their mortal enemies, House Harkonnen. It looks like promotion. Everyone — including Duke Leto, Paul's father — knows it is a trap. Honour and orders leave them no choice. They go to the desert to spring it on their own terms.",f:"House Atreides • House Harkonnen • The Emperor's design"},
+{k:"Chapter III — One Night",t:"The Fall of House Atreides",b:"The trap closes in a single night: a traitor inside the house, shields down, and the Emperor's own Sardaukar — the finest killers alive — wearing Harkonnen colours. Duke Leto dies striking back with a poisoned tooth. Paul and his mother Jessica escape into the storm and the deep desert, given up for dead.",b2:"",f:"Betrayed by Dr. Yueh • Sardaukar in disguise"},
+{k:"Chapter IV — The Deep Desert",t:"The Fremen",b:"In the desert, survival belongs to the Fremen — the planet's hidden people, tougher than any army and dreaming of a green Arrakis. Led by Stilgar, they test the two refugees. Jessica proves herself a Reverend Mother. Paul proves something stranger: he knows their ways without being taught. They begin to whisper a name from prophecy: Lisan al-Gaib — the Voice from the Outer World.",f:"Sietch Tabr • Stilgar • Water discipline"},
+{k:"Chapter V — Muad'Dib",t:"Paul Becomes a Legend",b:"Paul takes the Fremen name Muad'Dib, learns to ride a sandworm — a creature longer than a starship — and falls in love with the warrior Chani. His raids stop spice production cold, and the whole empire feels it. But his visions show him the price: a holy war in his name, billions dead, no matter which path he chooses.",f:"He rode the maker • Chani • The visions begin"},
+{k:"Chapter VI — Arrakeen",t:"The Duel for the Throne",b:"Paul survives the Water of Life and wakes able to see past and future. Riding sandworms, his Fremen break the Emperor's army at Arrakeen. Paul faces the Harkonnen heir Feyd-Rautha in a knife duel for the future of humanity — and wins. The Emperor abdicates. Paul Atreides takes the throne.",f:"Feyd-Rautha falls • Shaddam IV yields • A new Emperor"},
+{k:"Interlude — Herbert's Warning",t:"This Is Not a Triumph",b:"Frank Herbert insisted Dune is a warning, not a celebration. Paul is likeable, gifted and sincere — and his followers still unleash a jihad that kills billions. 'No more terrible disaster,' Herbert wrote, than a hero backed by faith. Watch Paul win everything, and ask what it cost everyone else.",f:"The point of Dune • Beware charismatic heroes"},
+{k:"Epilogue — Coming December 18, 2026",t:"Part Three: Messiah",b:"Twelve years later, in Dune Messiah — the book behind the upcoming Dune: Part Three — Emperor Paul is worshipped and hated in equal measure. Old powers conspire against him with a gift: a familiar face, regrown. At the centre stand Chani, his sister Alia, and Paul's final choice: hold absolute power, or walk away from it into the desert.",f:"Dune: Part Three • Adapting Dune Messiah (1969)"},
+{k:"The End — For Now",t:"The Desert Is Yours",b:"You now hold the whole shape of Dune: one planet, one substance, one boy, one warning. Explore the rest of this archive — the films and series scene by scene, the 18 lives that drive the story, the houses, the timeline across 5,000 years, and the quiz that decides which House claims you.",f:"Explore ↓ Characters • Screen Saga • Timeline • Quiz"}
+];
+const sm=document.getElementById('story-mode');
+if(sm){
+ const kEl=document.getElementById('sm-kicker'),tEl=document.getElementById('sm-title'),bEl=document.getElementById('sm-body'),fEl=document.getElementById('sm-fact'),bar=document.getElementById('sm-bar'),counter=document.getElementById('sm-counter'),stage=document.getElementById('sm-stage'),dotsWrap=document.getElementById('sm-dots'),nextBtn=document.getElementById('sm-next'),prevBtn=document.getElementById('sm-prev'),autoBtn=document.getElementById('sm-auto');
+ let idx=0,timer=null;
+ scenes.forEach((s,i)=>{ const d=document.createElement('button'); d.className='sm-dot'; d.type='button'; d.setAttribute('aria-label','Go to scene '+(i+1)); d.addEventListener('click',()=>go(i)); dotsWrap.appendChild(d); });
+ const dots=dotsWrap.querySelectorAll('.sm-dot');
+ function render(){ const s=scenes[idx]; kEl.textContent=s.k; tEl.textContent=s.t; bEl.textContent=s.b; fEl.textContent=s.f; counter.textContent='Scene '+(idx+1)+' / '+scenes.length; bar.style.width=((idx+1)/scenes.length*100)+'%'; dots.forEach((d,i)=>{ d.classList.toggle('on',i===idx); d.classList.toggle('done',i<idx); }); prevBtn.disabled=idx===0; prevBtn.style.opacity=idx===0?.4:1; nextBtn.textContent=idx===scenes.length-1?'Finish ✕':'Next →'; stage.classList.remove('enter'); void stage.offsetWidth; stage.classList.add('enter'); }
+ function go(i){ idx=Math.max(0,Math.min(scenes.length-1,i)); render(); }
+ function open(){ sm.hidden=false; document.body.style.overflow='hidden'; go(0); }
+ function close(){ sm.hidden=true; document.body.style.overflow=''; stopAuto(); }
+ function stopAuto(){ if(timer){ clearInterval(timer); timer=null; autoBtn.textContent='Auto ▶'; } }
+ autoBtn.addEventListener('click',()=>{ if(timer){ stopAuto(); } else { autoBtn.textContent='Pause ❚❚'; timer=setInterval(()=>{ if(idx>=scenes.length-1){ stopAuto(); return; } go(idx+1); },9000); } });
+ nextBtn.addEventListener('click',()=>{ if(idx>=scenes.length-1){ close(); const q=document.getElementById('saga'); if(q) q.scrollIntoView({behavior:'smooth'}); } else go(idx+1); });
+ prevBtn.addEventListener('click',()=>go(idx-1));
+ document.getElementById('sm-close').addEventListener('click',close);
+ const openBtn=document.getElementById('open-story'); if(openBtn) openBtn.addEventListener('click',open);
+ document.addEventListener('keydown',e=>{ if(sm.hidden) return; if(e.key==='Escape') close(); if(e.key==='ArrowRight') nextBtn.click(); if(e.key==='ArrowLeft') go(idx-1); });
+ let tx=null; sm.addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; },{passive:true}); sm.addEventListener('touchend',e=>{ if(tx===null) return; const dx=e.changedTouches[0].clientX-tx; if(Math.abs(dx)>48){ if(dx<0) nextBtn.click(); else go(idx-1); } tx=null; },{passive:true});
+}
+// ===== QUIZ: Which House claims you? =====
+const quizStage=document.getElementById('quiz-stage');
+if(quizStage){
+ const houses={
+  atreides:{name:"House Atreides",sigil:"The Red Hawk of Caladan",desc:"Power through loyalty, not fear. You lead from the front, keep your word when it costs you, and people follow you because they choose to. Your danger: honour can be a trap — ask Duke Leto. Your strength: in an empire of schemers, trust is the rarest weapon."},
+  harkonnen:{name:"House Harkonnen",sigil:"The Griffin of Giedi Prime",desc:"You understand the oldest rule of Arrakis: he who can destroy a thing controls it. Wealth, leverage and patience are your weapons, and you are not sentimental about using them. Your danger: cruelty breeds the resistance that ends you. Spend fear wisely."},
+  fremen:{name:"The Fremen",sigil:"People of the Deep Desert",desc:"No house claims you — the desert does. You value freedom over comfort, water over gold, and you can wait out any empire in the sands. You answer to your sietch and your own code. Your strength: nobody survives Arrakis like you do. Nobody."},
+  bene:{name:"The Bene Gesserit",sigil:"The Sisterhood in Shadow",desc:"Why rule for a lifetime when you can steer a thousand years? You trade in secrets, patience and plans inside plans. Thrones bore you; outcomes do not. Your danger: even the Sisterhood's greatest plan produced a Kwisatz Haderach it could not control. Play the long game — humbly."}
+ };
+ const questions=[
+  {q:"Your power comes from…",opts:[["Loyalty, honestly earned","atreides"],["Fear, wealth and leverage","harkonnen"],["The desert — and surviving it","fremen"],["Secrets and a thousand-year plan","bene"]]},
+  {q:"Choose your home world.",opts:[["Caladan — rain, oceans, honour","atreides"],["Giedi Prime — industry and total control","harkonnen"],["Arrakis — deep desert, no masters","fremen"],["Wallach IX — quiet, hidden, watching","bene"]]},
+  {q:"A crisis hits at midnight. You…",opts:[["Lead the response yourself, visibly","atreides"],["Crush it so completely no one tries again","harkonnen"],["Vanish into the sands and strike later","fremen"],["Were expecting it — your agent is already inside","bene"]]},
+  {q:"Pick the motto you actually live by.",opts:[["Duty above self, always","atreides"],["Control the thing, or destroy it","harkonnen"],["Survive. Stay free. Owe no one.","fremen"],["Knowledge is power — shared with no one","bene"]]}
+ ];
+ let qi=0,score={atreides:0,harkonnen:0,fremen:0,bene:0};
+ function renderQ(){ quizStage.innerHTML=''; const wrap=document.createElement('div'); wrap.className='quiz-stage-in';
+  if(qi>=questions.length){ const win=Object.keys(score).reduce((a,b)=>score[a]>=score[b]?a:b); const h=houses[win];
+   wrap.innerHTML='<p class="quiz-step">The sorting is complete</p><div class="quiz-result"><p class="sigil">'+h.sigil+'</p><h3>'+h.name+'</h3><p>'+h.desc+'</p></div>';
+   const r=document.createElement('button'); r.className='btn'; r.type='button'; r.textContent='Retake the sorting'; r.style.marginTop='16px'; r.addEventListener('click',()=>{ qi=0; score={atreides:0,harkonnen:0,fremen:0,bene:0}; renderQ(); }); wrap.appendChild(r);
+  } else { const cur=questions[qi]; const head=document.createElement('p'); head.className='quiz-step'; head.textContent='Question '+(qi+1)+' of '+questions.length; const qq=document.createElement('p'); qq.className='quiz-q'; qq.textContent=cur.q; const opts=document.createElement('div'); opts.className='quiz-opts';
+   cur.opts.forEach(o=>{ const b=document.createElement('button'); b.className='quiz-opt'; b.type='button'; b.textContent=o[0]; b.addEventListener('click',()=>{ score[o[1]]++; qi++; renderQ(); }); opts.appendChild(b); });
+   wrap.appendChild(head); wrap.appendChild(qq); wrap.appendChild(opts); }
+  quizStage.appendChild(wrap); }
+ renderQ();
+}
+})();
